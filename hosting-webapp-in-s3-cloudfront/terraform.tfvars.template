@@ -1,0 +1,3 @@
+s3_bucket_name = ""
+environment    = ""
+aws_region     = ""
