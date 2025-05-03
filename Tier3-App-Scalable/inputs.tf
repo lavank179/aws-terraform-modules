@@ -33,3 +33,7 @@ variable "docker_username" {
 variable "docker_password" {
   
 }
+
+output "website_url" {
+  value = module.load-balancer.backend_alb_internal_dns
+}

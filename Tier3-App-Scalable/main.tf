@@ -10,6 +10,8 @@
 #   }
 # }
 
+data "aws_region" "current" {}
+
 module "vpc-module" {
   source          = "./vpc"
   vpc_name        = "lavan-test"
@@ -20,6 +22,7 @@ module "vpc-module" {
   enable_nat_gate = false
   common_tags = {
     environment = "lavan-test"
+    region = data.aws_region.current.name
   }
 }
 
@@ -30,6 +33,7 @@ module "load-balancer" {
   private_subnets = module.vpc-module.private_subs
   common_tags = {
     environment = "lavan-test"
+    region = data.aws_region.current.name
   }
   depends_on = [ module.vpc-module.public_subs, module.vpc-module.private_subs ]
 }
@@ -60,6 +64,7 @@ module "asg" {
   docker_password = var.docker_password
   common_tags = {
     environment = "lavan-test"
+    region = data.aws_region.current.name
   }
 
   depends_on = [ module.load-balancer.frontend_tg_arns, module.load-balancer.backend_tg_arns ]
@@ -67,10 +72,10 @@ module "asg" {
 
 resource "aws_iam_instance_profile" "ec2_ecr_profile" {
   name = "lavan-test-profile"
-  role = aws_iam_role.ec2_ecr_role.name
+  role = aws_iam_role.ec2_ecr_ssm_role.name
 }
 
-resource "aws_iam_role" "ec2_ecr_role" {
+resource "aws_iam_role" "ec2_ecr_ssm_role" {
   name = "lavan-test"
 
   assume_role_policy = jsonencode({
@@ -88,6 +93,11 @@ resource "aws_iam_role" "ec2_ecr_role" {
 }
 
 resource "aws_iam_role_policy_attachment" "ec2_ecr_attachment" {
-  role       = aws_iam_role.ec2_ecr_role.name
+  role       = aws_iam_role.ec2_ecr_ssm_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "ssm_access" {
+  role       = aws_iam_role.ec2_ecr_ssm_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess"
 }

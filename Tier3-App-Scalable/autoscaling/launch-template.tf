@@ -37,7 +37,9 @@ resource "aws_launch_template" "frontend_lt" {
     sudo ./aws/install
     # aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 180294188976.dkr.ecr.us-west-2.amazonaws.com
 
-    echo "${var.docker_password}" | docker login -u "${var.docker_username}" --password-stdin
+    DOCKER_USER=$(aws ssm get-parameter --name "/${var.common_tags.environment}/docker_username" --region ${var.common_tags.region} --query "Parameter.Value" --output text)
+    DOCKER_PASS=$(aws ssm get-parameter --name "/${var.common_tags.environment}/docker_password" --region ${var.common_tags.region} --query "Parameter.Value" --output text)
+    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
     if [ $? -eq 0 ]; then
       echo "Successfully logged in to Docker Hub."
     else
@@ -89,14 +91,21 @@ resource "aws_launch_template" "backend_lt" {
     sudo ./aws/install
     # aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 180294188976.dkr.ecr.us-west-2.amazonaws.com
 
-    echo "${var.docker_password}" | docker login -u "${var.docker_username}" --password-stdin
+    DOCKER_USER=$(aws ssm get-parameter --name "/${var.common_tags.environment}/docker_username" --region ${var.common_tags.region} --query "Parameter.Value" --output text)
+    DOCKER_PASS=$(aws ssm get-parameter --name "/${var.common_tags.environment}/docker_password" --region ${var.common_tags.region} --query "Parameter.Value" --output text)
+    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
     if [ $? -eq 0 ]; then
       echo "Successfully logged in to Docker Hub."
     else
       echo "Failed to log in to Docker Hub."
       exit 1
     fi
-    docker run --rm -d -e DB_HOST=${aws_instance.db_server.private_ip} -e FRONTEND_URL=${var.frontend_dns} -e PORT=3000 -e DB_USER=${var.db_user} -e DB_PASSWORD=${var.db_pass} -e DB_NAME=postgres -e DB_PORT=5432 -p 3000:3000 ${var.backend_image}
+    DB_IP=$(aws ssm get-parameter --name "/${var.common_tags.environment}/db_private_ip" --region ${var.common_tags.region} --query "Parameter.Value" --output text)
+    DB_USER=$(aws ssm get-parameter --name "/${var.common_tags.environment}/db_user" --region ${var.common_tags.region} --query "Parameter.Value" --output text)
+    DB_PASSWORD=$(aws ssm get-parameter --name "/${var.common_tags.environment}/db_password" --region ${var.common_tags.region} --query "Parameter.Value" --output text)
+
+
+    docker run --rm -d -e DB_HOST=$DB_IP -e FRONTEND_URL=${var.frontend_dns} -e PORT=3000 -e DB_USER=$DB_USER -e DB_PASSWORD=$DB_PASSWORD -e DB_NAME=postgres -e DB_PORT=5432 -p 3000:3000 ${var.backend_image}
   EOF
   )
 }
