@@ -1,9 +1,10 @@
 resource "aws_lb" "frontend_alb" {
   name               = "${var.common_tags.environment}-frontend-alb"
   load_balancer_type = "application"
-  subnets            = [var.public_subnets[0].id, var.public_subnets[1].id]
+  subnets            = var.public_subnets
   security_groups    = [aws_security_group.frontend_sg.id]
   depends_on         = [aws_security_group.frontend_sg]
+  internal = false
 }
 
 resource "aws_lb_target_group" "frontend_tg" {
@@ -11,7 +12,7 @@ resource "aws_lb_target_group" "frontend_tg" {
   port        = 80
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
-  target_type = "instance"
+  target_type = "ip"
 }
 
 resource "aws_lb_listener" "frontend_listener" {
@@ -30,7 +31,7 @@ resource "aws_lb" "backend_alb" {
   name               = "${var.common_tags.environment}-backend-alb"
   internal           = true
   load_balancer_type = "application"
-  subnets            = [var.private_subnets[0].id, var.private_subnets[1].id]
+  subnets            = var.private_subnets
   security_groups    = [aws_security_group.backend_sg.id]
   depends_on         = [aws_security_group.backend_sg]
 }
@@ -40,7 +41,7 @@ resource "aws_lb_target_group" "backend_tg" {
   port        = 3000
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
-  target_type = "instance"
+  target_type = "ip"
 }
 
 resource "aws_lb_listener" "backend_listener" {

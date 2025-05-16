@@ -1,0 +1,9 @@
+ami_id         = ""
+key_name       = ""
+frontend_image = ""
+backend_image  = ""
+db_image       = ""
+db_pass        = ""
+db_user        = ""
+db_name        = ""
+db_port        = 0

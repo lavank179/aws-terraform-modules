@@ -1,17 +1,17 @@
 data "aws_subnet" "pub_sub1" {
-  id = var.public_subnets[0].id
+  id = var.public_subnets[0]
 }
 
 data "aws_subnet" "pub_sub2" {
-  id = var.public_subnets[1].id
+  id = var.public_subnets[1]
 }
 
 data "aws_subnet" "pri_sub1" {
-  id = var.private_subnets[0].id
+  id = var.private_subnets[0]
 }
 
 data "aws_subnet" "pri_sub2" {
-  id = var.private_subnets[1].id
+  id = var.private_subnets[1]
 }
 
 resource "aws_security_group" "frontend_sg" {
@@ -31,6 +31,7 @@ resource "aws_security_group" "frontend_sg" {
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"] # ALB to Frontend
+    self = true
   }
 
   egress {
